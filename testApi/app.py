@@ -1,4 +1,8 @@
 import flask
+from flask import request
+from testApi.modem import GSMModem  # Importation de la classe GSMModem
+
+modem = GSMModem('COM5')  # Remplacez COM1 par votre port série
 
 app = flask.Flask(__name__)
 
@@ -8,9 +12,13 @@ def index():
 
 @app.route('/param-get')
 def param_get():
-    num = flask.request.args.get('num', default="512")
-    msg = flask.request.args.get('msg', default="hello")
-    print(f'Le message: {msg} :\nA été envoyer au {num}')
+    num = flask.request.args.get('num')
+    msg = flask.request.args.get('msg')
+
+    print(f'Le message: {msg}\nA été envoyer au {num}')
+    num33 = "+33" + num[1:]
+    modem.sendText(num33, msg)
+
     return f'Le message: {msg}<br>A été envoyer au numéro {num}'
 
 @app.route('/test')
@@ -20,4 +28,4 @@ def test():
 
 if __name__ == '__main__':
     app.run(ssl_context='adhoc')
-    app.run(debug=True, port=5001)
+    app.run(debug=True, port=5000)
