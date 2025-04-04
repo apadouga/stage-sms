@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulaire Rappel RDV</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+    <style>
+        /* Organisation du formulaire en 2 colonnes */
+        .container {
+            display: flex;
+            justify-content: space-between;
+            max-width: 800px;
+            margin: auto;
+        }
+
+        .form-section, .preview-section {
+            width: 48%;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            resize: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Formulaire de Rappel de Rendez-vous</h2>
+
+    <div class="container">
+        <!-- Partie Formulaire -->
+        <div class="form-section">
+            <form id="rdvForm" action="/rappel" method="POST">
+                <!-- Numéro de téléphone -->
+                <label for="num">Numéro :</label>
+                <input type="text" id="num" name="num" required pattern="^[0-9]{10}$" title="Le numéro doit contenir exactement 10 chiffres">
+                <br>
+
+                <!-- Choix du template de message -->
+                <label for="msg_template">Modèle de message :</label>
+                <select id="msg_template" name="msg_template">
+                    <option value="naissance" selected>Rappel RDV Naissance</option>
+                    <option value="mariage">Rappel RDV Mariage</option>
+                    <option value="general">Rappel RDV Général</option>
+                </select>
+                <br>
+
+                <!-- Type de RDV (automatique, non modifiable) -->
+                <label for="type_rdv">Type de Rendez-vous :</label>
+                <input type="text" id="type_rdv" name="type_rdv" readonly>
+                <br>
+
+                <!-- Date du rendez-vous -->
+                <label for="date_rdv">Date du Rendez-vous :</label>
+                <input type="date" id="date_rdv" name="date_rdv" required>
+                <br>
+
+                <!-- Heure du rendez-vous -->
+                <label for="heure_rdv">Heure du Rendez-vous :</label>
+                <input type="time" id="heure_rdv" name="heure_rdv" required>
+                <br>
+
+                <!-- Bouton d'envoi -->
+                <button type="submit">Envoyer le Rappel</button>
+            </form>
+        </div>
+
+        <!-- Partie Prévisualisation -->
+        <div class="preview-section">
+            <label for="message_preview">Prévisualisation du message :</label>
+            <textarea id="message_preview" readonly></textarea>
+        </div>
+    </div>
+
+    <script>
+        // Définition des templates de message et de leur type
+        const templates = {
+            "naissance": {
+                "type": "Consultation Naissance",
+                "message": "📢 Rappel : Rendez-vous pour une consultation naissance le {date} à {heure}."
+            },
+            "mariage": {
+                "type": "Préparatifs Mariage",
+                "message": "💍 Rappel : Votre rendez-vous pour les préparatifs de mariage est prévu le {date} à {heure}."
+            },
+            "general": {
+                "type": "Rendez-vous Général",
+                "message": "📅 Rappel : Votre rendez-vous ({type}) est prévu le {date} à {heure}."
+            }
+        };
+
+        function updatePreview() {
+            let selectedTemplate = document.getElementById("msg_template").value;
+            let typeRdv = templates[selectedTemplate]["type"];
+            let dateRdv = document.getElementById("date_rdv").value;
+            let heureRdv = document.getElementById("heure_rdv").value;
+
+            // Met à jour le champ Type (non modifiable)
+            document.getElementById("type_rdv").value = typeRdv;
+
+            // Vérifier si la date et l'heure sont renseignées avant de les afficher
+            dateRdv = dateRdv ? dateRdv.split("-").reverse().join("/") : "JJ/MM/AAAA"; // Format FR
+            heureRdv = heureRdv || "HH:MM";
+
+            let previewMessage = templates[selectedTemplate]["message"]
+                .replace("{date}", dateRdv)
+                .replace("{heure}", heureRdv)
+                .replace("{type}", typeRdv);
+
+            document.getElementById("message_preview").value = previewMessage;
+        }
+
+        // Ajoute un événement pour mettre à jour l'aperçu à chaque modification
+        document.getElementById("msg_template").addEventListener("change", updatePreview);
+        document.getElementById("date_rdv").addEventListener("input", updatePreview);
+        document.getElementById("heure_rdv").addEventListener("input", updatePreview);
+
+        // Initialisation
+        updatePreview();
+    </script>
+
+</body>
+</html>

@@ -17,28 +17,28 @@
         <button type="submit">Envoyer</button>
     </form>
 
-{#    <script>#}
-{#        document.getElementById("smsForm").addEventListener("submit", function(event) {#}
-{#            let num = document.getElementById("num").value;#}
-{#            let msg = document.getElementById("msg").value;#}
-{##}
-{#            // Vérification du numéro (exactement 10 chiffres)#}
-{#            let numPattern = /^[0-9]{10}$/;#}
-{#            if (!numPattern.test(num)) {#}
-{#                alert("Le numéro doit contenir exactement 10 chiffres.");#}
-{#                event.preventDefault();#}
-{#                return;#}
-{#            }#}
-{##}
-{#            // Vérification des caractères spéciaux interdits dans le message#}
-{#            let msgPattern = /^[a-zA-Z0-9\s.,!?'-]+$/; // Autorise lettres, chiffres, espace, ., !, ?, ', -#}
-{#            if (!msgPattern.test(msg)) {#}
-{#                alert("Le message contient des caractères interdits. Utilisez uniquement des lettres, chiffres et les symboles .,!?'-");#}
-{#                event.preventDefault();#}
-{#                return;#}
-{#            }#}
-{#        });#}
-{#    </script>#}
+    <script>
+        document.getElementById("smsForm").addEventListener("submit", function(event) {
+            let num = document.getElementById("num").value;
+            let msg = document.getElementById("msg").value;
+
+            // Vérification du numéro (exactement 10 chiffres)
+            let numPattern = /^[0-9]{10}$/;
+            if (!numPattern.test(num)) {
+                alert("Le numéro doit contenir exactement 10 chiffres.");
+                event.preventDefault();
+                return;
+            }
+
+            // Vérification des caractères spéciaux interdits dans le message
+            let msgPattern = /^[a-zA-Z0-9\s.,!?àçéèê'-]+$/; // Autorise lettres, chiffres, espace, ., !, ?, ', -
+            if (!msgPattern.test(msg)) {
+                alert("Le message contient des caractères interdits. Utilisez uniquement des lettres, chiffres et les symboles .,!?'-");
+                event.preventDefault();
+                return;
+            }
+        });
+    </script>
 
     </body>
     </html>

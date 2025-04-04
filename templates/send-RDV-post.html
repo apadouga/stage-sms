@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulaire Rappel RDV</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+</head>
+<body>
+
+    <h2>Formulaire de Rappel de Rendez-vous</h2>
+
+    <form id="rdvForm" action="/rappel" method="POST">
+        <!-- Numéro de téléphone -->
+        <label for="num">Numéro :</label>
+        <input type="text" id="num" name="num" required pattern="^[0-9]{10}$" title="Le numéro doit contenir exactement 10 chiffres">
+        <br>
+
+        <!-- Message -->
+        <label for="msg">Message :</label>
+        <input type="text" id="msg" name="msg" required>
+        <br>
+
+        <!-- Date du rendez-vous -->
+        <label for="date_rdv">Date du Rendez-vous :</label>
+        <input type="date" id="date_rdv" name="date_rdv" required>
+        <br>
+
+        <!-- Heure du rendez-vous -->
+        <label for="heure_rdv">Heure du Rendez-vous :</label>
+        <input type="time" id="heure_rdv" name="heure_rdv" required>
+        <br>
+
+        <!-- Choix du template de message -->
+        <label for="msg_template">Modèle de message :</label>
+        <select id="msg_template" name="msg_template">
+            <option value="naissance" selected>Rappel RDV Naissance</option>
+            <option value="mariage">Rappel RDV Mariage</option>
+            <option value="general">Rappel RDV Général</option>
+        </select>
+        <br>
+
+
+    <!-- Aperçu dynamique du message -->
+    <h3>Prévisualisation du message :</h3>
+    <p id="message_preview"></p>
+
+        <!-- Bouton d'envoi -->
+        <button type="submit">Envoyer le Rappel</button>
+    </form>
+
+
+<script>
+
+    // Définition des templates de message
+        const templates = {
+            "naissance": "📢 Rappel : Rendez-vous pour une consultation naissance le {date} à {heure}.",
+            "mariage": "💍 Rappel : Votre rendez-vous pour les préparatifs de mariage est prévu le {date} à {heure}.",
+            "general": "📅 Rappel : Votre rendez-vous ({type}) est prévu le {date} à {heure}."
+        };
+
+        function updatePreview() {
+            let selectedTemplate = document.getElementById("msg_template").value;
+            let typeRdv = document.getElementById("type_rdv").value || "votre rendez-vous";
+            let dateRdv = document.getElementById("date_rdv").value || "JJ/MM/AAAA";
+            let heureRdv = document.getElementById("heure_rdv").value || "HH:MM";
+
+            let previewMessage = templates[selectedTemplate]
+                .replace("{date}", dateRdv)
+                .replace("{heure}", heureRdv)
+                .replace("{type}", typeRdv);
+
+            document.getElementById("message_preview").innerText = previewMessage;
+        }
+
+        // Mettre à jour la preview lors des changements
+        document.getElementById("msg_template").addEventListener("change", updatePreview);
+        document.getElementById("type_rdv").addEventListener("input", updatePreview);
+        document.getElementById("date_rdv").addEventListener("input", updatePreview);
+        document.getElementById("heure_rdv").addEventListener("input", updatePreview);
+
+        // Initialisation
+        updatePreview();
+
+        document.getElementById("rdvForm").addEventListener("submit", function(event) {
+            let num = document.getElementById("num").value;
+            let msg = document.getElementById("msg").value;
+            let date_rdv = document.getElementById("date_rdv").value;
+            let heure_rdv = document.getElementById("heure_rdv").value;
+            let type_rdv = document.getElementById("type_rdv").value;
+
+            // Vérification du numéro (exactement 10 chiffres)
+            let numPattern = /^[0-9]{10}$/;
+            if (!numPattern.test(num)) {
+                alert("Le numéro doit contenir exactement 10 chiffres.");
+                event.preventDefault();
+                return;
+            }
+
+            // Vérification des caractères spéciaux interdits dans le message
+            let msgPattern = /^[a-zA-Z0-9\s.,!?àçéèê'-]+$/;
+            if (!msgPattern.test(msg)) {
+                alert("Le message contient des caractères interdits. Utilisez uniquement des lettres, chiffres et les symboles .,!?'-");
+                event.preventDefault();
+                return;
+            }
+
+            // Vérification de la date du rendez-vous (doit être une date valide et future)
+            let today = new Date().toISOString().split("T")[0];
+            if (date_rdv < today) {
+                alert("La date du rendez-vous doit être dans le futur.");
+                event.preventDefault();
+                return;
+            }
+
+            // Vérification de l'heure du rendez-vous
+            if (!heure_rdv) {
+                alert("Veuillez entrer une heure de rendez-vous valide.");
+                event.preventDefault();
+                return;
+            }
+
+            // Vérification du type de rendez-vous (doit être renseigné)
+            if (type_rdv.trim() === "") {
+                alert("Veuillez préciser le type de rendez-vous.");
+                event.preventDefault();
+                return;
+            }
+        });
+    </script>
+
+</body>
+</html>

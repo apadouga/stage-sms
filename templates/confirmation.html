@@ -10,14 +10,16 @@
 <table class="table">
             <thead>
                 <tr>
-                    <th>Numero</th>
-                    <th>Message</th>
+                    {% for champ in rdv.keys() %}
+                        <th>{{ champ }}</th>
+                    {% endfor %}
                 </tr>
             </thead>
             <tbody>
                     <tr>
-                        <td>{{ num }}</td>
-                        <td>{{ msg }}</td>
+                        {% for champ in rdv.values() %}
+                            <td>{{ champ }}</td>
+                        {% endfor %}
                     </tr>
             </tbody>
         </table>
