@@ -1,0 +1,18 @@
+C:\Users\m.joly>curl -X POST https://sms.ville-latronche.fr/receive -H "Content-Type: application/json" -d "{\"type\":\"code\",\"num"\:\"0783074093\","confirmation_code\":\"123456\"}"
+<!doctype html>
+<html lang=en>
+<title>400 Bad Request</title>
+<h1>Bad Request</h1>
+<p>The browser (or proxy) sent a request that this server could not understand.</p>
+
+C:\Users\m.joly>curl -X POST https://sms.ville-latronche.fr/receive -H "Content-Type: application/json" -d "{\"type\":\"code\",\"num\":\"0783074093\","confirmation_code\":\"123456\"}"
+<!doctype html>
+<html lang=en>
+<title>400 Bad Request</title>
+<h1>Bad Request</h1>
+<p>The browser (or proxy) sent a request that this server could not understand.</p>
+
+C:\Users\m.joly>curl -X POST https://sms.ville-latronche.fr/receive -H "Content-Type: application/json" -d "{\"type\":\"msg\",\"message\":\"Bonjour depuis cURL\"}"
+{"message":"Bonjour depuis cURL","status":"success","type":"msg"}
+
+C:\Users\m.joly>curl -X POST https://sms.ville-latronche.fr/receive -H "Content-Type: application/json" -d "{\"type\":\"code\",\"num"\:\"0783074093\","confirmation_code\":\"123456\"}"

@@ -6,7 +6,6 @@
     <title>Formulaire Rappel RDV</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
     <style>
-        /* Organisation du formulaire en 2 colonnes */
         .container {
             display: flex;
             justify-content: space-between;
@@ -30,15 +29,13 @@
     <h2>Formulaire de Rappel de Rendez-vous</h2>
 
     <div class="container">
-        <!-- Partie Formulaire -->
+        <!-- Formulaire -->
         <div class="form-section">
             <form id="rdvForm" action="/rappel" method="POST">
-                <!-- Numéro de téléphone -->
                 <label for="num">Numéro :</label>
                 <input type="text" id="num" name="num" required pattern="^[0-9]{10}$" title="Le numéro doit contenir exactement 10 chiffres">
                 <br>
 
-                <!-- Choix du template de message -->
                 <label for="msg_template">Modèle de message :</label>
                 <select id="msg_template" name="msg_template">
                     <option value="naissance" selected>Rappel RDV Naissance</option>
@@ -47,27 +44,22 @@
                 </select>
                 <br>
 
-                <!-- Type de RDV (automatique, non modifiable) -->
-                <label for="type_rdv">Type de Rendez-vous :</label>
-                <input type="text" id="type_rdv" name="type_rdv" readonly>
-                <br>
-
-                <!-- Date du rendez-vous -->
                 <label for="date_rdv">Date du Rendez-vous :</label>
                 <input type="date" id="date_rdv" name="date_rdv" required>
                 <br>
 
-                <!-- Heure du rendez-vous -->
                 <label for="heure_rdv">Heure du Rendez-vous :</label>
                 <input type="time" id="heure_rdv" name="heure_rdv" required>
                 <br>
 
-                <!-- Bouton d'envoi -->
+                <!-- Champ caché pour le message -->
+                <input type="hidden" id="msg_generated" name="msg_generated">
+
                 <button type="submit">Envoyer le Rappel</button>
             </form>
         </div>
 
-        <!-- Partie Prévisualisation -->
+        <!-- Prévisualisation -->
         <div class="preview-section">
             <label for="message_preview">Prévisualisation du message :</label>
             <textarea id="message_preview" readonly></textarea>
@@ -75,49 +67,71 @@
     </div>
 
     <script>
-        // Définition des templates de message et de leur type
         const templates = {
             "naissance": {
                 "type": "Consultation Naissance",
-                "message": "📢 Rappel : Rendez-vous pour une consultation naissance le {date} à {heure}."
+                "message": "Rappel : Rendez-vous pour une consultation naissance le {jour} {date} à {heure}."
             },
             "mariage": {
                 "type": "Préparatifs Mariage",
-                "message": "💍 Rappel : Votre rendez-vous pour les préparatifs de mariage est prévu le {date} à {heure}."
+                "message": "💍 Rappel : Votre rendez-vous pour les préparatifs de mariage est prévu le {jour} {date} à {heure}."
             },
             "general": {
                 "type": "Rendez-vous Général",
-                "message": "📅 Rappel : Votre rendez-vous ({type}) est prévu le {date} à {heure}."
+                "message": "📅 Rappel : Votre rendez-vous ({type}) est prévu le {jour} {date} à {heure}."
             }
         };
 
+        const joursSemaine = [
+            "dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"
+        ];
+
+        function getJourSemaine(dateStr) {
+            if (!dateStr) return "jour";
+            const date = new Date(dateStr);
+            return joursSemaine[date.getDay()];
+        }
+
         function updatePreview() {
-            let selectedTemplate = document.getElementById("msg_template").value;
-            let typeRdv = templates[selectedTemplate]["type"];
+            const selectedTemplate = document.getElementById("msg_template").value;
+            const typeRdv = templates[selectedTemplate]["type"];
             let dateRdv = document.getElementById("date_rdv").value;
             let heureRdv = document.getElementById("heure_rdv").value;
 
-            // Met à jour le champ Type (non modifiable)
-            document.getElementById("type_rdv").value = typeRdv;
-
-            // Vérifier si la date et l'heure sont renseignées avant de les afficher
-            dateRdv = dateRdv ? dateRdv.split("-").reverse().join("/") : "JJ/MM/AAAA"; // Format FR
-            heureRdv = heureRdv || "HH:MM";
+            const jour = getJourSemaine(dateRdv);
+            const formattedDate = dateRdv ? dateRdv.split("-").reverse().join("/") : "JJ/MM/AAAA";
+            const formattedHeure = heureRdv || "HH:MM";
 
             let previewMessage = templates[selectedTemplate]["message"]
-                .replace("{date}", dateRdv)
-                .replace("{heure}", heureRdv)
+                .replace("{jour}", jour)
+                .replace("{date}", formattedDate)
+                .replace("{heure}", formattedHeure)
                 .replace("{type}", typeRdv);
 
             document.getElementById("message_preview").value = previewMessage;
+
+            // Envoi au backend via champ caché
+            document.getElementById("msg_generated").value = previewMessage;
         }
 
-        // Ajoute un événement pour mettre à jour l'aperçu à chaque modification
+        // Met à jour la preview quand les champs du formulaire sont rempli
         document.getElementById("msg_template").addEventListener("change", updatePreview);
         document.getElementById("date_rdv").addEventListener("input", updatePreview);
         document.getElementById("heure_rdv").addEventListener("input", updatePreview);
 
-        // Initialisation
+        // Met à jour msg_generated juste avant l'envoi du formulaire
+        document.getElementById("rdvForm").addEventListener("submit", function(event) {
+            updatePreview();
+
+            // Vérification de la date du rendez-vous (doit être une date valide et future)
+            let today = new Date().toISOString().split("T")[0];
+            if (date_rdv < today) {
+                alert("La date du rendez-vous doit être dans le futur.");
+                event.preventDefault();
+                return;
+            }
+        });
+
         updatePreview();
     </script>
 

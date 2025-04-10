@@ -9,7 +9,7 @@ from requests.utils import is_valid_cidr
 class Message:
     # Définition des regex
     NUM_PATTERN = re.compile(r"^[0-9]{10}$")  # 10 chiffres exacts
-    MSG_PATTERN = re.compile(r"^[a-zA-Z0-9\s.,!?ç'-]+$")  # Message autorisé
+    MSG_PATTERN = re.compile(r"^[^@#$%^&*()=\\[\]{}<>|`~\";]+$") # caractères spéciaux non désirés (liste noire)
 
     def __init__(self, num: str, msg: str):
         """Initialise un objet Message après validation des entrées."""
@@ -92,6 +92,17 @@ class MessageRappelRDV(Message):
             print(f"⏳ Le rappel sera envoyé le {rappel_datetime.strftime('%Y-%m-%d %H:%M')}")
             datetime.time.sleep(attente)
             self.send(modem)
+
+class MessageCode(Message):
+
+    def __init__(self, num: str, msg: str, code: str):
+        """
+        Initialise un message code d'authentification.
+        """
+        super().__init__(num, msg)
+
+
+        self.code = code
 
 
 # Exemple d'utilisation
