@@ -1,10 +1,13 @@
 import logging
 import os
 import re
+from datetime import date
+
 import flask
-from flask import jsonify
+from flask import jsonify, Flask
+from flask_sqlalchemy import SQLAlchemy
 from functools import wraps
-from markupsafe import Markup
+
 from modem import GSMModem  # Importation de la classe GSMModem
 from message import Message, MessageRappelRDV
 from logging.handlers import RotatingFileHandler
@@ -14,6 +17,15 @@ from logging.handlers import RotatingFileHandler
 API_KEY = "table"
 
 app = flask.Flask(__name__)
+
+# Exemple avec SQLite, simple pour commencer
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+# Import des modèles après l'initialisation de db
+from modelsDb import MessageDb, Config, User
+
 
 # Mises en place de logs
 if not os.path.exists('logs'):
@@ -125,7 +137,7 @@ def require_api_key(f):
 def receive_data():
     if not flask.request.is_json:
         app.logger.warning("Invalid content type. JSON expected")
-        return jsonify({'status': 'error', 'error': 'Invalid content type. JSON expected.'}), 400
+        return jsonify({'status': 'error', 'errorType': 'Invalid content type. JSON expected.'}), 400
 
     data = flask.request.get_json()
     app.logger.info(f"Requête reçue: {data}")
@@ -134,20 +146,20 @@ def receive_data():
     message_type = data.get('type')
     if message_type not in ('code', 'msg'):
         app.logger.warning(f"Missing or invalid type field. type: {message_type}")
-        return jsonify({'status': 'error', 'error': 'Missing or invalid type field. Must be "code" or "msg".'}), 400
+        return jsonify({'status': 'error', 'errorType': 'Missing or invalid type field. Must be "code" or "msg".'}), 400
 
     # Vérifie que le numéro est présent et correct
     num = data.get('num')
     if not num or not re.fullmatch(r'0[1-9]\d{8}', num):
         app.logger.warning(f"Missing or invalid num field. num: {num}")
-        return jsonify({'status': 'error', 'error': 'Missing or invalid num field. Must be French format like 06XXXXXXXX.'}), 400
+        return jsonify({'status': 'error', 'errorType': 'Missing or invalid num field. Must be French format like 06XXXXXXXX.'}), 400
 
     # Construction du message selon le type
     if message_type == 'code':
         code = data.get('confirmation_code')
         if not code or not re.fullmatch(r'\d{6}', code):
             app.logger.warning(f"Missing or invalid code field. confirmation_code: {code}")
-            return jsonify({'status': 'error', 'error': 'Missing or invalid confirmation_code format. Must be exactly 6 digits.'}), 400
+            return jsonify({'status': 'error', 'errorType': 'Missing or invalid confirmation_code format. Must be exactly 6 digits.'}), 400
 
         msg = f"Code d'authentification :\n{code}"
 
@@ -155,13 +167,23 @@ def receive_data():
         msg = data.get('message')
         if not msg:
             app.logger.warning(f"Missing message field.")
-            return jsonify({'status': 'error', 'error': 'Missing message field'}), 400
+            return jsonify({'status': 'error', 'errorType': 'Missing message field'}), 400
 
     # Envoi du message
     try:
-        message = Message(num, msg)
-        message.send(modem)
-        app.logger.info(f"Message evoyer, numero: {num}, message: {message}")
+        # message = Message(num, msg)
+        # message.send(modem)
+        app.logger.info(f"Message evoyer, numero: {num}, message: {msg}")
+
+        dateRDV = data.get('dateRDV') if message_type == 'rdv' else None
+        message = MessageDb(
+            number = num,
+            content = msg,
+            type = message_type,
+            dateRDV = dateRDV,
+        )
+        db.session.add(message)
+        db.session.commit()
 
         return jsonify({
             'status': 'success',
@@ -171,5 +193,10 @@ def receive_data():
         }), 200
     except ValueError as e:
         app.logger.warning(f"Error: {str(e)}")
-        return jsonify({'status': 'error', 'error': str(e)}), 400
+        return jsonify({'status': 'error', 'errorType': str(e)}), 400
+
+@app.route ('/db')
+def testDb():
+    messages = MessageDb.query.all()
+    return jsonify([m.to_dict() for m in messages])
 

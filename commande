@@ -16,3 +16,5 @@ C:\Users\m.joly>curl -X POST https://sms.ville-latronche.fr/receive -H "Content-
 {"message":"Bonjour depuis cURL","status":"success","type":"msg"}
 
 C:\Users\m.joly>curl -X POST https://sms.ville-latronche.fr/receive -H "Content-Type: application/json" -d "{\"type\":\"code\",\"num"\:\"0783074093\","confirmation_code\":\"123456\"}"
+
+curl -X POST https://sms.ville-latronche.fr/receive -H "Content-Type: application/json" -H "X-API-KEY: table" -d "{\"type\": \"code\", \"confirmation_code\": \"123456\", \"num\": \"0783074093\"}"

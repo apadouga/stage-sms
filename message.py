@@ -1,6 +1,7 @@
 import datetime
 import re
 
+from flask import jsonify
 from markupsafe import Markup
 from modem import GSMModem  # Importation de la classe GSMModem
 from requests.utils import is_valid_cidr
