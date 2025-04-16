@@ -1,13 +1,25 @@
-    <!DOCTYPE html>
-    <html lang="fr">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Formulaire GET</title>
-    </head>
-    <body>
-    <form id="smsForm" action="/" method="POST">
+<!DOCTYPE html>
+<html lang="fr">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulaire GET</title>
+    <link rel="stylesheet" href="../static/styles.css">
+
+
+</head>
+<body>
+
+    <div class="button-container">
+        <a href="/msg" class="btn">Messages</a>
+        <a href="/rappel" class="btn">Rappel RDV</a>
+        <a href="/historique" class="btn">Historique</a>
+    </div>
+
+        <h2>Envoyer un message</h2>
+
+    <form id="smsForm" action="/smg" method="POST">
         <label for="num">Numéro :</label>
         <input type="text" id="num" name="num" required pattern="^[0-9]{10}$" title="Le numéro doit contenir exactement 10 chiffres">
         <br>

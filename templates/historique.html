@@ -4,72 +4,67 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Missions{% endblock %}</title>
-    <link rel="stylesheet" href="../../static/css/accueil.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+    <link rel="stylesheet" href="../static/styles.css">
+
+
 </head>
 <body>
-    <div class="container">
-        {% block main %}
-        <h1>Suivi des demandes de missions</h1>
 
+    <div class="button-container">
+        <a href="/msg" class="btn">Messages</a>
+        <a href="/rappel" class="btn">Rappel RDV</a>
+        <a href="/historique" class="btn">Historique</a>
+    </div>
+
+    <h2>Historique des messages</h2>
+
+    <form action="{{ url_for('historique') }}" method="post" style="display:inline;">
+        <input type="hidden" name="type" value="msg">
+        <button type="submit" >Message type msg</button>
+    </form>
+
+    <form action="{{ url_for('historique') }}" method="post" style="display:inline;">
+        <input type="hidden" name="type" value="code">
+        <button type="submit" >Message type code</button>
+    </form>
+
+    <form action="{{ url_for('historique') }}" method="post" style="display:inline;">
+        <input type="hidden" name="type" value="rdv">
+        <button type="submit" >Message type rdv</button>
+    </form>
+
+        <form action="{{ url_for('historique') }}" method="post" style="display:inline;">
+
+        <button type="submit">Tous les messages</button>
+    </form>
+
+    {% if messages != None %}
+    <div class="container">
         <table class="table">
             <thead>
                 <tr>
-                    <th>Motif</th>
-                    <th>Nom</th>
-                    <th>Prénom</th>
-                    <th>Date départ</th>
-                    <th>Date retour</th>
-                    <th>Ville</th>
-                    <th>Téléphone</th>
-                    <th>Type de transport</th>
-                    <th>Numéro</th>
-                    <th>Type d'hébergement</th>
-                    <th>Coût mission</th>
-                    <th>État de la mission</th>
-                    <th>ID</th>
-                    <th>Modifer État</th>
-                    <th>Modifier</th>
+                    {% for champ in messages[0].keys() %}
+                        <th>{{ champ }}</th>
+                    {% endfor %}
                 </tr>
+
             </thead>
             <tbody>
-                {% for ligne in lignes %}
-
+                {% for message in messages %}
                     <tr>
-                        {% for champ in ligne.values() %}
-                            <td>{{ champ }}</td>
-                        {% endfor %}
-                        <td>
-                            <form action="/modifier_etat_mission" method="post">
-                               <select name="etat_mission" onchange="this.form.submit()">
-                                    <option value="archivée" {% if ligne['État de la mission'] == 'archivée' %} selected {% endif %}>archivée</option>
-                                    <option value="desarchiver" {% if ligne['État de la mission'] == 'desarchiver' %} selected {% endif %}>Désarchiver</option>
-                                    <option value="validée" {% if ligne['État de la mission'] == 'validée' %} selected {% endif %}>validée</option>
-                                    <option value="rejetée" {% if ligne['État de la mission'] == 'rejetée' %} selected {% endif %}>rejetée</option>
-                                    <option value="demandée" {% if ligne['État de la mission'] == 'demandée' %} selected {% endif %}>demandée</option>
-                                </select>
-                                <input type="hidden" name="id" value="{{ ligne['ID'] }}">
-                            </form>
-                        </td>
-                        <td>
-                            <form action="{{ url_for('choix_modification') }}" method="post" style="display:inline;">
-                                <input type="hidden" name="id" value="{{ ligne['ID'] }}">
-                                <button type="submit" class="btn btn-primary">Modifier</button>
-                            </form>
-                        </td>
+                    {% for champ in message.values() %}
+
+                        {% if champ %}
+                        <td> {{ champ }} </td>
+                        {% endif %}
+
+                    {% endfor %}
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
-
-        <a href="/comptes" class="btn btn-primary mb-3">Aller vers les Comptes</a>
-        <a href="/hebergements" class="btn btn-primary mb-3">Aller vers les Hebergements</a>
-        <a href="/depenses" class="btn btn-primary mb-3">Aller vers les Depenses</a>
-        <a href="/missions" class="btn btn-primary mb-3">Aller vers les Missions</a>
-        <a href="/transports" class="btn btn-primary mb-3">Aller vers les Transports</a>
-        <a href="/villes" class="btn btn-primary mb-3">Aller vers les villes</a>
-        <a href="/enseignants" class="btn btn-primary mb-3">Aller vers les enseignants</a>
-        <a href="/logout" class="btn btn-danger mb-3">Déconnexion</a>
-        {% endblock %}
     </div>
+    {% endif %}
 </body>
 </html>

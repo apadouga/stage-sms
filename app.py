@@ -1,12 +1,14 @@
 import logging
 import os
 import re
-from datetime import date
+from datetime import datetime
 
 import flask
 from flask import jsonify, Flask
 from flask_sqlalchemy import SQLAlchemy
 from functools import wraps
+
+from sqlalchemy import func
 
 from modem import GSMModem  # Importation de la classe GSMModem
 from message import Message, MessageRappelRDV
@@ -51,20 +53,18 @@ MSG_PATTERN = re.compile(r"^[a-zA-Z0-9\s.,!?çéèê'-]+$")  # Autorise lettres,
 
 @app.before_request
 def log_request_info():
-    app.logger.info(
+    app.logger.debug(
         f"Requête reçue: {flask.request.method} {flask.request.url} | IP: {flask.request.remote_addr}"
     )
 
-@app.route('/test')
-def index():
+@app.route('/')
+def accueil():
+    return flask.render_template('accueil.html')
 
-    return flask.render_template('test-template.html')
-
-
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/msg', methods=['GET', 'POST'])
 def message():
     if flask.request.method == 'GET':
-        return flask.render_template('send-message-post.html')
+        return flask.render_template('send-message.html')
     else: # request.method == 'POST'
         num = flask.request.form.get('num')
         msg = flask.request.form.get('msg')
@@ -78,6 +78,15 @@ def message():
             message = Message(num, msg)
             message.send(modem)
 
+            messageDb = MessageDb(
+                number=num,
+                content=msg,
+                type="msg",
+                dateRDV=None,
+            )
+            db.session.add(messageDb)
+            db.session.commit()
+
             return flask.render_template('confirmation.html', rdv=rdv)
         except ValueError as e:
             return flask.render_template('erreur.html',erreur="Numéro invalide. Il doit contenir exactement 10 chiffres.")
@@ -85,7 +94,7 @@ def message():
 @app.route('/rappel', methods=['GET', 'POST'])
 def rappel_rdv():
     if flask.request.method == 'GET':
-        return flask.render_template('send-RDV-post.html')  # Formulaire HTML
+        return flask.render_template('send-rappel.html')  # Formulaire HTML
 
     else:  # POST
         num = flask.request.form.get('num')
@@ -102,14 +111,28 @@ def rappel_rdv():
             'Message': msg,
         }
 
+        app.logger.debug(rdv)
+
 
         try:
             # Création du message avec validation
             print(rdv)
 
             message_rappel = MessageRappelRDV(num, msg, date_rdv, heure_rdv, type_rdv)
-            message_rappel.send_rappel_automatique(modem)
+            message_rappel.send(modem)
 
+            # Fusionne les deux en une seule chaîne, puis convertis-la en objet datetime
+            date_heure_str = f"{date_rdv} {heure_rdv}"  # Ex: '2025-04-20 14:30'
+            dateRDV = datetime.strptime(date_heure_str, '%Y-%m-%d %H:%M')
+
+            messageDb = MessageDb(
+                number=num,
+                content=msg,
+                type="rdv",
+                dateRDV=dateRDV,
+            )
+            db.session.add(messageDb)
+            db.session.commit()
             return flask.render_template('confirmation.html', rdv=rdv)
 
 
@@ -120,7 +143,7 @@ def rappel_rdv():
 @app.errorhandler(Exception)
 def handle_exception(e):
     app.logger.error(f"Erreur non gérée: {str(e)}", exc_info=True)
-    return {"error": "Une erreur interne est survenue."}, 500
+    return {"error": f"Erreur non gérée: {str(e)}"}, 500
 
 
 def require_api_key(f):
@@ -169,6 +192,7 @@ def receive_data():
             app.logger.warning(f"Missing message field.")
             return jsonify({'status': 'error', 'errorType': 'Missing message field'}), 400
 
+
     # Envoi du message
     try:
         # message = Message(num, msg)
@@ -176,13 +200,13 @@ def receive_data():
         app.logger.info(f"Message evoyer, numero: {num}, message: {msg}")
 
         dateRDV = data.get('dateRDV') if message_type == 'rdv' else None
-        message = MessageDb(
+        messageDb = MessageDb(
             number = num,
             content = msg,
             type = message_type,
             dateRDV = dateRDV,
         )
-        db.session.add(message)
+        db.session.add(messageDb)
         db.session.commit()
 
         return jsonify({
@@ -197,6 +221,52 @@ def receive_data():
 
 @app.route ('/db')
 def testDb():
-    messages = MessageDb.query.all()
-    return jsonify([m.to_dict() for m in messages])
+    messages = MessageDb.query.filter(MessageDb.type == 'code').all()
+    return [m.to_dict() for m in messages]
 
+
+@app.route('/favicon.ico')
+def favicon():
+    return flask.send_from_directory('static', 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
+@app.route('/styles.css')
+def styles():
+    return flask.send_from_directory('static', 'styles.css')
+
+@app.route('/historique', methods=['GET', 'POST'])
+def historique():
+    if flask.request.method == 'GET':
+        return flask.render_template('historique.html', messages=None)
+    else: # request.method == 'POST'
+        type = flask.request.form.get('type')
+
+        # messages = MessageDb.query.with_entities(MessageDb.number, MessageDb.content).filter(MessageDb.type == type)
+        query =db.session.query(
+                func.strftime('%Y-%m-%d %H:%M:%S', MessageDb.timestamp).label('timestamp'),
+                MessageDb.number,
+                MessageDb.type,
+                MessageDb.content
+            )
+
+
+        # Ajout du filtre uniquement si `type_recherche` est défini
+        if type:
+            query = query.filter(MessageDb.type == type)
+
+        messages = query.order_by(MessageDb.timestamp.desc()).all()
+
+        # messages = [m.to_dict() for m in messages]
+
+        messages = [{
+                'timestamp': m.timestamp,
+                'number': m.number,
+                'type': m.type,
+                'content': m.content
+            } for m in messages ]
+
+        app.logger.info(f"messages : {messages}")
+
+        if messages == []:
+            messages = [{'id': None, 'number': None, 'content': None, 'type': None, 'timestamp': None, 'dateRDV': None}]
+
+        return flask.render_template('historique.html', messages=messages)
