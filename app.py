@@ -1,10 +1,11 @@
 import logging
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import flask
-from flask import jsonify, Flask
+from flask import jsonify, Flask, session, request, redirect, render_template
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
 from flask_sqlalchemy import SQLAlchemy
 from functools import wraps
 
@@ -13,6 +14,7 @@ from sqlalchemy import func
 from modem import GSMModem  # Importation de la classe GSMModem
 from message import Message, MessageRappelRDV
 from logging.handlers import RotatingFileHandler
+from werkzeug.security import check_password_hash, generate_password_hash
 
 
 # Définition de la clé d'api
@@ -20,9 +22,13 @@ API_KEY = "table"
 
 app = flask.Flask(__name__)
 
+app.secret_key = 'fgbveriuvgbeoirgbveiuvgbfovhubefd'
+app.permanent_session_lifetime = timedelta(minutes=30)
+
 # Exemple avec SQLite, simple pour commencer
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 db = SQLAlchemy(app)
 
 # Import des modèles après l'initialisation de db
@@ -41,7 +47,10 @@ log_handler.setFormatter(log_formatter)
 app.logger.addHandler(log_handler)
 app.logger.setLevel(logging.DEBUG)
 
-
+# Initialisation de Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"  # redirection automatique vers /login si l'utilisateur n'est pas connecté
 
 modem = GSMModem('/dev/ttyUSB0')  # Remplacez COM1 par votre port série
 
@@ -51,17 +60,50 @@ NUM_PATTERN = re.compile(r"^[0-9]{10}$")  # 10 chiffres exactement
 MSG_PATTERN = re.compile(r"^[a-zA-Z0-9\s.,!?çéèê'-]+$")  # Autorise lettres, chiffres, espaces et ponctuation sécurisée
 
 
+
 @app.before_request
 def log_request_info():
     app.logger.debug(
         f"Requête reçue: {flask.request.method} {flask.request.url} | IP: {flask.request.remote_addr}"
     )
 
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    # hashed_password = generate_password_hash("toto")
+    # new_user = User(username="admin", password_hash=hashed_password)
+    # db.session.add(new_user)
+    # db.session.commit()
+    if flask.request.method == 'POST':
+        username = flask.request.form['username']
+        password = flask.request.form['password']
+        user = User.query.filter_by(username=username).first()
+        if user and user.check_password(password):
+            login_user(user)
+            return flask.redirect(flask.url_for('message'))
+        else:
+            return "Identifiants invalides", 401
+    return flask.render_template('login.html')
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return flask.redirect(flask.url_for('login'))
+
+
 @app.route('/')
+@login_required
 def accueil():
+
     return flask.render_template('accueil.html')
 
 @app.route('/msg', methods=['GET', 'POST'])
+@login_required
 def message():
     if flask.request.method == 'GET':
         return flask.render_template('send-message.html')
@@ -92,6 +134,7 @@ def message():
             return flask.render_template('erreur.html',erreur="Numéro invalide. Il doit contenir exactement 10 chiffres.")
 
 @app.route('/rappel', methods=['GET', 'POST'])
+@login_required
 def rappel_rdv():
     if flask.request.method == 'GET':
         return flask.render_template('send-rappel.html')  # Formulaire HTML
@@ -220,6 +263,7 @@ def receive_data():
         return jsonify({'status': 'error', 'errorType': str(e)}), 400
 
 @app.route ('/db')
+@login_required
 def testDb():
     messages = MessageDb.query.filter(MessageDb.type == 'code').all()
     return [m.to_dict() for m in messages]
@@ -234,13 +278,13 @@ def styles():
     return flask.send_from_directory('static', 'styles.css')
 
 @app.route('/historique', methods=['GET', 'POST'])
+@login_required
 def historique():
     if flask.request.method == 'GET':
         return flask.render_template('historique.html', messages=None)
     else: # request.method == 'POST'
         type = flask.request.form.get('type')
 
-        # messages = MessageDb.query.with_entities(MessageDb.number, MessageDb.content).filter(MessageDb.type == type)
         query =db.session.query(
                 func.strftime('%Y-%m-%d %H:%M:%S', MessageDb.timestamp).label('timestamp'),
                 MessageDb.number,
@@ -255,7 +299,6 @@ def historique():
 
         messages = query.order_by(MessageDb.timestamp.desc()).all()
 
-        # messages = [m.to_dict() for m in messages]
 
         messages = [{
                 'timestamp': m.timestamp,

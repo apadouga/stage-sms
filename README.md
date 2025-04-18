@@ -100,24 +100,17 @@ Deux types de requêtes sont possibles : avec un code (`type = "code"`) ou un me
 
 ### Envoi d’un code
 ```bash
-curl -X POST http://votre_domaine/receive \
-  -H "Content-Type: application/json" \
-  -H "X-API-KEY: votre_clé_api" \
-  -d '{
-    "type": "code",
-    "num": "0601020304",
-    "confirmation_code": "123456"
-  }'
+curl -X POST https://sms.ville-latronche.fr/receive 
+-H "Content-Type: application/json" 
+-H "X-API-KEY: table" 
+-d "{\"type\": \"code\", \"confirmation_code\": \"123456\", \"num\": \"0783074093\"}"
+
 ```
 
 ### Envoi d’un message libre
 ```bash
-curl -X POST http://votre_domaine/receive \
-  -H "Content-Type: application/json" \
-  -H "X-API-KEY: votre_clé_api" \
-  -d '{
-    "type": "msg",
-    "num": "0601020304",
-    "message": "Bonjour, ceci est un test."
-  }'
+curl -X POST https://sms.ville-latronche.fr/receive 
+-H "Content-Type: application/json" 
+-H "X-API-KEY: table" 
+-d "{\"type\": \"msg\", \"message\": \"msg api\", \"num\": \"0783074093\"}"
 ```

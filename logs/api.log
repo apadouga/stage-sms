@@ -3564,3 +3564,12 @@ AttributeError: 'User' object has no attribute 'is_active'
 2025-04-16 19:32:52,502 - DEBUG - Requête reçue: GET http://sms.ville-latronche.fr/static/styles.css | IP: 127.0.0.1
 2025-04-16 19:33:01,745 - DEBUG - Requête reçue: GET http://sms.ville-latronche.fr/msg | IP: 127.0.0.1
 2025-04-16 19:33:01,768 - DEBUG - Requête reçue: GET http://sms.ville-latronche.fr/static/styles.css | IP: 127.0.0.1
+2025-04-17 11:59:16,737 - DEBUG - Requête reçue: GET http://sms.ville-latronche.fr/ | IP: 127.0.0.1
+2025-04-17 11:59:16,863 - DEBUG - Requête reçue: GET http://sms.ville-latronche.fr/login?next=/ | IP: 127.0.0.1
+2025-04-17 12:03:26,641 - DEBUG - Requête reçue: GET http://sms.ville-latronche.fr/msg | IP: 127.0.0.1
+2025-04-17 12:03:26,693 - DEBUG - Requête reçue: GET http://sms.ville-latronche.fr/static/styles.css | IP: 127.0.0.1
+2025-04-18 13:05:31,414 - DEBUG - Requête reçue: GET http://sms.ville-latronche.fr/ | IP: 127.0.0.1
+2025-04-18 13:05:31,424 - DEBUG - Requête reçue: GET http://sms.ville-latronche.fr/login?next=/ | IP: 127.0.0.1
+2025-04-18 13:05:39,494 - DEBUG - Requête reçue: POST http://sms.ville-latronche.fr/login?next=/ | IP: 127.0.0.1
+2025-04-18 13:05:39,792 - DEBUG - Requête reçue: GET http://sms.ville-latronche.fr/msg | IP: 127.0.0.1
+2025-04-18 13:05:39,873 - DEBUG - Requête reçue: GET http://sms.ville-latronche.fr/static/styles.css | IP: 127.0.0.1
